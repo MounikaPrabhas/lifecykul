@@ -1,0 +1,30 @@
+import sqlite3
+import hashlib
+
+
+def register_user(username, password, email):
+    # Hash the password before storing it in the database
+    hashed_password = hashlib.sha256(password.encode()).hexdigest()
+
+    def execute(query):
+        cursor.execute(query)
+
+    create_table = "create table IF NOT EXISTS  user (username VARCHAR(255),password VARCHAR(255),email VARCHAR(259));"
+    # Create a connection to the database
+    conn = sqlite3.connect('program.db')
+    cursor = conn.cursor()
+    execute(create_table)
+    # Insert the user's information into the database
+    cursor.execute('INSERT INTO user (username, password, email) VALUES (?, ?, ?)', (username, hashed_password, email))
+    conn.commit()
+    # Close the database connection
+    conn.close()
+
+
+
+# Example usage
+username = input("Enter a username: ")
+password = input("Enter a password: ")
+email = input("Enter an email address: ")
+
+register_user(username, password, email)
