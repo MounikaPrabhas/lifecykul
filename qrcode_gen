@@ -1,0 +1,53 @@
+import qrcode
+from io import BytesIO
+from PIL import Image
+import os
+from flask import Flask, render_template, request, send_file
+from flask_wtf.csrf import CSRFProtect
+
+app = Flask(__name__)
+app.config['SECRET_KEY'] = 'your_secret_key_here'
+csrf = CSRFProtect(app)
+
+@app.route('/')
+def index():
+    return render_template('qrcode.html')
+
+@app.route('/generate', methods=['POST'])
+@csrf.protect()
+def generate():
+    # Get the link and number of times from the form data
+    link = request.form['link']
+    num_times = int(request.form['num_times'])
+
+    # Create a PDF file to save the QR codes
+    pdf_filename = "qrcodes.pdf"
+    images = []
+
+    # Generate the QR code for the link multiple times
+    for i in range(num_times):
+        # Generate the QR code
+        qr = qrcode.QRCode(version=1, box_size=10, border=5)
+        qr.add_data(link)
+        qr.make(fit=True)
+
+        # Create an image from the QR code
+        img = qr.make_image(fill_color="black", back_color="white")
+
+        # Convert the image to PNG and save it in a BytesIO object
+        buffer = BytesIO()
+        img.save(buffer, format="PNG")
+        buffer.seek(0)
+
+        # Add the PNG image to the list of images for the PDF file
+        images.append(Image.open(buffer))
+
+    # Save all the images as a single PDF file
+    if images:
+        images[0].save(pdf_filename, save_all=True, append_images=images[1:])
+
+    # Serve the PDF file for download
+    return send_file(pdf_filename, as_attachment=True)
+
+if name == 'main':
+    app.run(debug=True)
